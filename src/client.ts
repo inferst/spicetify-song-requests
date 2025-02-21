@@ -1,8 +1,8 @@
 import { StaticAuthProvider } from "@twurple/auth";
 import { ChatClient } from "@twurple/chat";
 import SpotifyWebApi from "spotify-web-api-js";
-import { settings } from "./settings";
 import { parseSpotifyURL, parseYoutubeURL } from "./parser";
+import { settings } from "./settings";
 
 const SCOPES = ["chat:read", "chat:edit", "channel:moderate"];
 
@@ -57,7 +57,7 @@ export function start() {
           (track) => track.provider == "queue",
         );
 
-        const maxTracks: number = settings.getFieldValue('max-tracks');
+        const maxTracks: number = settings.getFieldValue("max-tracks");
 
         if (nextTracks.length >= maxTracks) {
           chatClient.say(channel, `Очередь переполнена (${maxTracks} треков)`);
@@ -68,6 +68,19 @@ export function start() {
           const youtubeId = parseYoutubeURL(message);
 
           if (youtubeId) {
+            const video = await fetch(
+              `https://www.youtube.com/oembed?url=${message}&format=json`,
+            ).then((data) => data.json());
+
+            if (video.title) {
+              const data = await spotifyApi.searchTracks(video.title);
+              const foundTrack = data.tracks.items[0];
+
+              if (foundTrack) {
+                addToQueue(foundTrack);
+              }
+            }
+
             return;
           }
 
