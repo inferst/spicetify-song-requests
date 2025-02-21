@@ -18,8 +18,6 @@ export function start() {
   if (channel && clientId && accessToken) {
     const authProvider = new StaticAuthProvider(clientId, accessToken, SCOPES);
 
-    spotifyApi.setAccessToken(Spicetify.Platform.Session.accessToken);
-
     async function addToQueue(track: SpotifyApi.TrackObjectFull) {
       if (isRequested(track.uri)) {
         return;
@@ -65,6 +63,8 @@ export function start() {
         }
 
         try {
+          spotifyApi.setAccessToken(Spicetify.Platform.Session.accessToken);
+
           const youtubeId = parseYoutubeURL(message);
 
           if (youtubeId) {
