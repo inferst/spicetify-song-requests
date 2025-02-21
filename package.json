@@ -16,6 +16,7 @@
   "dependencies": {
     "@twurple/auth": "^7.2.1",
     "@twurple/chat": "^7.2.1",
-    "spcr-settings": "^1.3.1"
+    "spcr-settings": "^1.3.1",
+    "spotify-web-api-js": "^1.5.2"
   }
 }
