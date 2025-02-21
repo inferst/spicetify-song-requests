@@ -8,6 +8,7 @@ export const settings = new SettingsSection(
 
 export function pushSettings() {
   settings.addInput("max-tracks", "Maximum tracks", "20");
+  settings.addInput("max-duration", "Maximum duration (min)", "10");
   settings.addInput("twitch-channel", "Twitch Channel", "");
   settings.addInput("twitch-client-id", "Twitch Client Id", "");
   settings.addInput("twitch-access-token", "Twitch Access Token", "");

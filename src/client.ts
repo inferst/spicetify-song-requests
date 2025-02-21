@@ -54,9 +54,10 @@ export function start() {
         );
 
         const maxTracks: number = settings.getFieldValue("max-tracks");
+        const maxDuration: number = settings.getFieldValue("max-duration");
 
         if (nextTracks.length >= maxTracks) {
-          chatClient.say(channel, `Очередь переполнена (${maxTracks} треков)`);
+          chatClient.say(channel, `Максимум ${maxTracks} треков в очереди`);
           return;
         }
 
@@ -64,7 +65,9 @@ export function start() {
           const tracks = await getTracksByMessage(message);
 
           for (const track of tracks) {
-            addToQueue(track);
+            if (track.duration_ms < maxDuration * 60 * 1000) {
+              addToQueue(track);
+            }
           }
         } catch (e) {
           Spicetify.showNotification("Song Requests Error");
