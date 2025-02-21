@@ -1,14 +1,11 @@
 import { StaticAuthProvider } from "@twurple/auth";
 import { ChatClient } from "@twurple/chat";
-import SpotifyWebApi from "spotify-web-api-js";
-import { parseSpotifyURL, parseYoutubeURL } from "./parser";
 import { settings } from "./settings";
+import { getTracksByMessage } from "./track";
 
 const SCOPES = ["chat:read", "chat:edit", "channel:moderate"];
 
 let chatClient: ChatClient;
-
-const spotifyApi = new SpotifyWebApi();
 
 export function start() {
   const channel: string = settings.getFieldValue("twitch-channel");
@@ -47,10 +44,11 @@ export function start() {
 
     chatClient.onMessage(async (_channel, _user, text, _msg) => {
       const words = text.trim().split(" ");
+
       const command = words[0];
       const message = words.slice(1).join(" ");
 
-      if (command == "!sr") {
+      if (["!sr", "!song"].includes(command) && message) {
         const nextTracks = Spicetify.Queue.nextTracks.filter(
           (track) => track.provider == "queue",
         );
@@ -63,42 +61,10 @@ export function start() {
         }
 
         try {
-          spotifyApi.setAccessToken(Spicetify.Platform.Session.accessToken);
+          const tracks = await getTracksByMessage(message);
 
-          const youtubeId = parseYoutubeURL(message);
-
-          if (youtubeId) {
-            const video = await fetch(
-              `https://www.youtube.com/oembed?url=${message}&format=json`,
-            ).then((data) => data.json());
-
-            if (video.title) {
-              const data = await spotifyApi.searchTracks(video.title);
-              const foundTrack = data.tracks.items[0];
-
-              if (foundTrack) {
-                addToQueue(foundTrack);
-              }
-            }
-
-            return;
-          }
-
-          const spotifyId = parseSpotifyURL(message);
-
-          if (spotifyId) {
-            const data = await spotifyApi.getTracks([spotifyId]);
-            const foundTrack = data.tracks[0];
-
-            addToQueue(foundTrack);
-            return;
-          }
-
-          const data = await spotifyApi.searchTracks(message);
-          const foundTrack = data.tracks.items[0];
-
-          if (foundTrack) {
-            addToQueue(foundTrack);
+          for (const track of tracks) {
+            addToQueue(track);
           }
         } catch (e) {
           Spicetify.showNotification("Song Requests Error");
