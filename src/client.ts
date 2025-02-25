@@ -59,7 +59,7 @@ export function start() {
 
     async function removeFromQueue(user: string, count: number) {
       if (chatterQueue[user]) {
-        const uris = chatterQueue[user].splice(-Math.abs(count));
+        const uris = chatterQueue[user].splice(-count);
 
         if (uris.length > 0) {
           await Spicetify.removeFromQueue(uris.map((uri) => ({ uri })));
@@ -108,7 +108,7 @@ export function start() {
           console.error(e);
         }
       } else if (["!rm"].includes(command)) {
-        const count = message == "" ? 1 : Number(message);
+        const count = Math.abs(message == "" ? 1 : Number(message));
 
         if (count > 0) {
           await removeFromQueue(user, count);
