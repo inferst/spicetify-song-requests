@@ -41,7 +41,9 @@ export async function getTracksByMessage(
 
   if (spotifyTracks.length > 0) {
     const data = await spotifyApi.getTracks(spotifyTracks);
-    tracks.concat(data.tracks);
+    for (const item of data.tracks) {
+      tracks.push(item);
+    }
   }
 
   if (youtubeTracks.length == 0 && spotifyTracks.length == 0) {

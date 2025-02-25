@@ -73,6 +73,8 @@ export function start() {
           Spicetify.showNotification("Song Requests Error");
           console.error(e);
         }
+      } else if (command == '!skip') {
+        // TODO: Skip implementation
       }
     });
   }
