@@ -7,6 +7,12 @@ const SCOPES = ["chat:read", "chat:edit", "channel:moderate"];
 
 let chatClient: ChatClient;
 
+type ChatterQueue = {
+  [key: string]: string[];
+};
+
+const chatterQueue: ChatterQueue = {};
+
 export function start() {
   const channel: string = settings.getFieldValue("twitch-channel");
   const clientId: string = settings.getFieldValue("twitch-client-id");
@@ -15,7 +21,10 @@ export function start() {
   if (channel && clientId && accessToken) {
     const authProvider = new StaticAuthProvider(clientId, accessToken, SCOPES);
 
-    async function addToQueue(tracks: SpotifyApi.TrackObjectFull[]) {
+    async function addToQueue(
+      user: string,
+      tracks: SpotifyApi.TrackObjectFull[],
+    ) {
       const maxDuration: number = settings.getFieldValue("max-duration");
 
       const uris = [];
@@ -38,11 +47,24 @@ export function start() {
             `Трек "${artists} - ${name}" добавлен в очередь`,
           );
 
-          uris.push({ uri: track.uri });
+          uris.push(track.uri);
         }
       }
 
-      await Spicetify.addToQueue(uris);
+      await Spicetify.addToQueue(uris.map((uri) => ({ uri })));
+
+      const chatterUris = chatterQueue[user] ?? [];
+      chatterQueue[user] = [...chatterUris, ...uris];
+    }
+
+    async function removeFromQueue(user: string, count: number) {
+      if (chatterQueue[user]) {
+        const uris = chatterQueue[user].splice(-Math.abs(count));
+
+        if (uris.length > 0) {
+          await Spicetify.removeFromQueue(uris.map((uri) => ({ uri })));
+        }
+      }
     }
 
     if (chatClient) {
@@ -60,13 +82,13 @@ export function start() {
       Spicetify.showNotification("Song Requests Initialized");
     });
 
-    chatClient.onMessage(async (_channel, _user, text, _msg) => {
+    chatClient.onMessage(async (_channel, user, text, _msg) => {
       const words = text.trim().split(" ");
 
       const command = words[0];
       const message = words.slice(1).join(" ");
 
-      if (["!sr", "!song"].includes(command) && message) {
+      if (["!sr"].includes(command) && message) {
         const nextTracks = Spicetify.Queue.nextTracks.filter(
           (track) => track.provider == "queue",
         );
@@ -80,13 +102,17 @@ export function start() {
 
         try {
           const tracks = await getTracksByMessage(message);
-          addToQueue(tracks);
+          await addToQueue(user, tracks);
         } catch (e) {
           Spicetify.showNotification("Song Requests Error");
           console.error(e);
         }
-      } else if (command == "!skip") {
-        // TODO: Skip implementation
+      } else if (["!rm"].includes(command)) {
+        const count = message == "" ? 1 : Number(message);
+
+        if (count > 0) {
+          await removeFromQueue(user, count);
+        }
       }
     });
   }
