@@ -22,11 +22,13 @@ export async function getTracksByMessage(
         `https://www.youtube.com/oembed?url=${item}&format=json`,
       ).then((data) => data.json());
 
-      if (video.title) {
+      if (video.title && !youtubeTracks.includes(video.title)) {
         youtubeTracks.push(video.title);
       }
     } else if (spotifyId) {
-      spotifyTracks.push(spotifyId);
+      if (!spotifyTracks.includes(spotifyId)) {
+        spotifyTracks.push(spotifyId);
+      }
     }
   }
 

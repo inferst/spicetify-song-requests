@@ -15,16 +15,30 @@ export function start() {
   if (channel && clientId && accessToken) {
     const authProvider = new StaticAuthProvider(clientId, accessToken, SCOPES);
 
-    async function addToQueue(track: SpotifyApi.TrackObjectFull) {
-      if (isRequested(track.uri)) {
-        return;
+    async function addToQueue(tracks: SpotifyApi.TrackObjectFull[]) {
+      const maxDuration: number = settings.getFieldValue("max-duration");
+
+      const uris = [];
+
+      for (const track of tracks) {
+        if (track.duration_ms < maxDuration * 60 * 1000) {
+          if (isRequested(track.uri)) {
+            return;
+          }
+
+          const name = track.name;
+          const artists = track.artists.map((artist) => artist.name).join(" ");
+
+          chatClient.say(
+            channel,
+            `Трек "${artists} - ${name}" добавлен в очередь`,
+          );
+
+          uris.push({ uri: track.uri });
+        }
       }
 
-      const name = track.name;
-      const artists = track.artists.map((artist) => artist.name).join(" ");
-
-      await Spicetify.addToQueue([{ uri: track.uri }]);
-      chatClient.say(channel, `Трек "${artists} - ${name}" добавлен в очередь`);
+      await Spicetify.addToQueue(uris);
     }
 
     if (chatClient) {
@@ -54,7 +68,6 @@ export function start() {
         );
 
         const maxTracks: number = settings.getFieldValue("max-tracks");
-        const maxDuration: number = settings.getFieldValue("max-duration");
 
         if (nextTracks.length >= maxTracks) {
           chatClient.say(channel, `Максимум ${maxTracks} треков в очереди`);
@@ -63,17 +76,12 @@ export function start() {
 
         try {
           const tracks = await getTracksByMessage(message);
-
-          for (const track of tracks) {
-            if (track.duration_ms < maxDuration * 60 * 1000) {
-              addToQueue(track);
-            }
-          }
+          addToQueue(tracks);
         } catch (e) {
           Spicetify.showNotification("Song Requests Error");
           console.error(e);
         }
-      } else if (command == '!skip') {
+      } else if (command == "!skip") {
         // TODO: Skip implementation
       }
     });
