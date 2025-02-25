@@ -22,12 +22,16 @@ export function start() {
 
       for (const track of tracks) {
         if (track.duration_ms < maxDuration * 60 * 1000) {
-          if (isRequested(track.uri)) {
-            return;
-          }
-
           const name = track.name;
           const artists = track.artists.map((artist) => artist.name).join(" ");
+
+          if (isRequested(track.uri)) {
+            chatClient.say(
+              channel,
+              `Трек "${artists} - ${name}" уже в очереди`,
+            );
+            return;
+          }
 
           chatClient.say(
             channel,
