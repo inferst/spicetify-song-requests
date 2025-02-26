@@ -1,9 +1,26 @@
 import { parseSpotifyURL, parseYoutubeURL } from "./parser";
 import { spotifyApi } from "./spotify";
 
-export async function getTracksByMessage(
-  message: string,
-): Promise<SpotifyApi.TrackObjectFull[]> {
+export type Track = {
+  uri: string;
+  name: string;
+  artists: string;
+  duration: number;
+};
+
+function formatTrack(spotifyTrack: SpotifyApi.TrackObjectFull): Track {
+  const name = spotifyTrack.name;
+  const artists = spotifyTrack.artists.map((artist) => artist.name).join(" ");
+
+  return {
+    uri: spotifyTrack.uri,
+    name,
+    artists,
+    duration: spotifyTrack.duration_ms,
+  };
+}
+
+export async function getTracksByMessage(message: string): Promise<Track[]> {
   const words = message.split(" ");
   const urls = new Set(words);
 
@@ -53,11 +70,11 @@ export async function getTracksByMessage(
     const foundTrack = data.tracks.items[0];
 
     if (foundTrack) {
-      return [foundTrack];
+      return [formatTrack(foundTrack)];
     }
   }
 
-  return tracks;
+  return tracks.map(formatTrack);
 }
 
 async function searchSpotifyIdByYoutubeURL(

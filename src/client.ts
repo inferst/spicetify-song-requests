@@ -1,14 +1,14 @@
 import { StaticAuthProvider } from "@twurple/auth";
 import { ChatClient } from "@twurple/chat";
 import { settings } from "./settings";
-import { getTracksByMessage } from "./track";
+import { getTracksByMessage, Track } from "./track";
 
 const SCOPES = ["chat:read", "chat:edit", "channel:moderate"];
 
 let chatClient: ChatClient;
 
 type ChatterQueue = {
-  [key: string]: string[];
+  [key: string]: Track[];
 };
 
 const chatterQueue: ChatterQueue = {};
@@ -21,48 +21,53 @@ export function start() {
   if (channel && clientId && accessToken) {
     const authProvider = new StaticAuthProvider(clientId, accessToken, SCOPES);
 
-    async function addToQueue(
-      user: string,
-      tracks: SpotifyApi.TrackObjectFull[],
-    ) {
+    async function addToQueue(user: string, tracks: Track[]) {
       const maxDuration: number = settings.getFieldValue("max-duration");
 
-      const uris = [];
+      const filteredTracks: Track[] = [];
 
       for (const track of tracks) {
-        if (track.duration_ms < maxDuration * 60 * 1000) {
-          const name = track.name;
-          const artists = track.artists.map((artist) => artist.name).join(" ");
-
+        if (track.duration < maxDuration * 60 * 1000) {
           if (isRequested(track.uri)) {
             chatClient.say(
               channel,
-              `Трек "${artists} - ${name}" уже в очереди`,
+              `Трек "${track.artists} - ${track.name}" уже в очереди`,
             );
             return;
           }
 
           chatClient.say(
             channel,
-            `Трек "${artists} - ${name}" добавлен в очередь`,
+            `Трек "${track.artists} - ${track.name}" добавлен в очередь`,
           );
 
-          uris.push(track.uri);
+          filteredTracks.push(track);
         }
       }
 
-      await Spicetify.addToQueue(uris.map((uri) => ({ uri })));
+      await Spicetify.addToQueue(
+        filteredTracks.map((track) => ({ uri: track.uri })),
+      );
 
       const chatterUris = chatterQueue[user] ?? [];
-      chatterQueue[user] = [...chatterUris, ...uris];
+      chatterQueue[user] = [...chatterUris, ...filteredTracks];
     }
 
     async function removeFromQueue(user: string, count: number) {
       if (chatterQueue[user]) {
-        const uris = chatterQueue[user].splice(-count);
+        const tracks = chatterQueue[user].splice(-count);
 
-        if (uris.length > 0) {
-          await Spicetify.removeFromQueue(uris.map((uri) => ({ uri })));
+        if (tracks.length > 0) {
+          for (const track of tracks) {
+            chatClient.say(
+              channel,
+              `Трек "${track.artists} - ${track.name}" удален в очередь`,
+            );
+          }
+
+          await Spicetify.removeFromQueue(
+            tracks.map((track) => ({ uri: track.uri })),
+          );
         }
       }
     }
