@@ -42,6 +42,11 @@ export function start() {
           );
 
           filteredTracks.push(track);
+        } else {
+          chatClient.say(
+            channel,
+            `Трек должен быть меньше ${maxDuration} (мин)`,
+          );
         }
       }
 
