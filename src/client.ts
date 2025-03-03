@@ -1,7 +1,7 @@
 import { StaticAuthProvider } from "@twurple/auth";
 import { ChatClient } from "@twurple/chat";
 import { settings } from "./settings";
-import { getTracksByMessage, Track } from "./track";
+import { getTracksByMessage, Track, trackTitle } from "./track";
 
 const SCOPES = ["chat:read", "chat:edit", "channel:moderate"];
 
@@ -31,14 +31,14 @@ export function start() {
           if (isRequested(track.uri)) {
             chatClient.say(
               channel,
-              `Трек "${track.artists} - ${track.name}" уже в очереди`,
+              `Трек ${track.title} уже в очереди`,
             );
             return;
           }
 
           chatClient.say(
             channel,
-            `Трек "${track.artists} - ${track.name}" добавлен в очередь`,
+            `Трек ${track.title} добавлен в очередь`,
           );
 
           filteredTracks.push(track);
@@ -66,7 +66,7 @@ export function start() {
           for (const track of tracks) {
             chatClient.say(
               channel,
-              `Трек "${track.artists} - ${track.name}" удален в очередь`,
+              `Трек ${track.title} удален в очередь`,
             );
           }
 
@@ -122,6 +122,16 @@ export function start() {
 
         if (count > 0) {
           await removeFromQueue(user, count);
+        }
+      } else if (["!song"].includes(command)) {
+        const queueTrack = Spicetify.Queue.track;
+        const track = queueTrack?.contextTrack?.metadata;
+
+        if (track) {
+          chatClient.say(
+            channel,
+            `Сейчас играет ${trackTitle(track.title, track.artist_name)}`,
+          );
         }
       }
     });

@@ -7,6 +7,7 @@ export type Track = {
   uri: string;
   name: string;
   artists: string;
+  title: string;
   duration: number;
 };
 
@@ -18,8 +19,13 @@ function formatTrack(spotifyTrack: SpotifyApi.TrackObjectFull): Track {
     uri: spotifyTrack.uri,
     name,
     artists,
+    title: trackTitle(name, artists),
     duration: spotifyTrack.duration_ms,
   };
+}
+
+export function trackTitle(name: string, artist: string): string {
+  return `"${name} - ${artist}"`;
 }
 
 export async function getTracksByMessage(message: string): Promise<Track[]> {
