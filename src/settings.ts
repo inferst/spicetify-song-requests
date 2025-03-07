@@ -1,12 +1,11 @@
 import { SettingsSection } from "spcr-settings";
-import { start } from "./client";
 
 export const settings = new SettingsSection(
   "Song Requests",
   "spicetify-song-requests",
 );
 
-export function pushSettings() {
+export function pushSettings(onUpdate: () => void) {
   settings.addInput("max-tracks", "Maximum tracks", "20");
   settings.addInput("max-duration", "Maximum duration (min)", "10");
   settings.addInput("twitch-channel", "Twitch Channel", "");
@@ -18,7 +17,7 @@ export function pushSettings() {
     "Update Song Requests Settings",
     "Update",
     () => {
-      start();
+      onUpdate();
     },
   );
 

@@ -5,8 +5,6 @@ import { parseSpotifyURL, parseYoutubeURL } from "./parser";
 
 export type Track = {
   uri: string;
-  name: string;
-  artists: string;
   title: string;
   duration: number;
 };
@@ -17,8 +15,6 @@ function formatTrack(spotifyTrack: SpotifyApi.TrackObjectFull): Track {
 
   return {
     uri: spotifyTrack.uri,
-    name,
-    artists,
     title: trackTitle(name, artists),
     duration: spotifyTrack.duration_ms,
   };
