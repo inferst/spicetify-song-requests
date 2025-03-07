@@ -7,8 +7,10 @@ const SCOPES = ["chat:read", "chat:edit", "channel:moderate"];
 
 let chatClient: ChatClient;
 
+type QueueTrack = { index: number } & Track;
+
 type ChatterQueue = {
-  [key: string]: Track[];
+  [key: string]: QueueTrack[];
 };
 
 const chatterQueue: ChatterQueue = {};
@@ -24,24 +26,27 @@ export function start() {
     async function addToQueue(user: string, tracks: Track[]) {
       const maxDuration: number = settings.getFieldValue("max-duration");
 
-      const filteredTracks: Track[] = [];
+      const chatterUris = chatterQueue[user] ?? [];
+      const trackToQueue: QueueTrack[] = [];
+
+      const index = getNextIndex(chatterQueue);
 
       for (const track of tracks) {
         if (track.duration < maxDuration * 60 * 1000) {
           if (isRequested(track.uri)) {
             chatClient.say(
               channel,
-              `Трек ${track.title} уже в очереди`,
+              `Трек #${index} ${track.title} уже в очереди`,
             );
             return;
           }
 
           chatClient.say(
             channel,
-            `Трек ${track.title} добавлен в очередь`,
+            `Трек #${index} ${track.title} добавлен в очередь`,
           );
 
-          filteredTracks.push(track);
+          trackToQueue.push({ index, ...track });
         } else {
           chatClient.say(
             channel,
@@ -51,28 +56,31 @@ export function start() {
       }
 
       await Spicetify.addToQueue(
-        filteredTracks.map((track) => ({ uri: track.uri })),
+        trackToQueue.map((track) => ({ uri: track.uri })),
       );
 
-      const chatterUris = chatterQueue[user] ?? [];
-      chatterQueue[user] = [...chatterUris, ...filteredTracks];
+      chatterQueue[user] = [...chatterUris, ...trackToQueue];
     }
 
-    async function removeFromQueue(user: string, count: number) {
+    async function removeFromQueue(user: string, index: number) {
       if (chatterQueue[user]) {
-        const tracks = chatterQueue[user].splice(-count);
+        const chatterTrack = chatterQueue[user].find(
+          (track) => track.index == index,
+        );
 
-        if (tracks.length > 0) {
-          for (const track of tracks) {
+        if (chatterTrack) {
+          const playerTrack = Spicetify.Queue.nextTracks.find(
+            (track) => track.contextTrack.uri == chatterTrack.uri,
+          );
+
+          if (playerTrack) {
             chatClient.say(
               channel,
-              `Трек ${track.title} удален в очередь`,
+              `Трек #${index} ${chatterTrack.title} удален из очереди`,
             );
-          }
 
-          await Spicetify.removeFromQueue(
-            tracks.map((track) => ({ uri: track.uri })),
-          );
+            await Spicetify.removeFromQueue([{ uri: chatterTrack.uri }]);
+          }
         }
       }
     }
@@ -118,10 +126,10 @@ export function start() {
           console.error(e);
         }
       } else if (["!rm"].includes(command)) {
-        const count = Math.abs(message == "" ? 1 : Number(message));
+        const index = message == "" ? 1 : Number(message.replace("#", ""));
 
-        if (count > 0) {
-          await removeFromQueue(user, count);
+        if (index > 0) {
+          await removeFromQueue(user, index);
         }
       } else if (["!song"].includes(command)) {
         const queueTrack = Spicetify.Queue.track;
@@ -144,4 +152,9 @@ function isRequested(uri: string) {
   );
 
   return nextTracks.some((track) => track.contextTrack.uri == uri);
+}
+
+function getNextIndex(queue: ChatterQueue) {
+  const keys = Object.keys(queue);
+  return keys.flatMap((user) => queue[user]).length + 1;
 }
