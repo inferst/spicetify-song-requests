@@ -1,5 +1,5 @@
 import { chatClient } from "../client";
-import { chatterQueue, QueueTrack } from "../queue";
+import { allRequests, RequestTrack } from "../requests";
 import { settings } from "../settings";
 import { getTracksByMessage, Track } from "../track";
 
@@ -21,7 +21,7 @@ async function addToQueue(user: string, tracks: Track[]) {
   const maxTracks: number = settings.getFieldValue("max-tracks");
   const maxDuration: number = settings.getFieldValue("max-duration");
 
-  const addToQueueTracks: QueueTrack[] = [];
+  const addToQueueTracks: RequestTrack[] = [];
 
   for (const track of tracks) {
     if (nextTracks.length + addToQueueTracks.length >= maxTracks) {
@@ -43,11 +43,11 @@ async function addToQueue(user: string, tracks: Track[]) {
       continue;
     }
 
-    const id = chatterQueue.length + 1;
-    const addTrack: QueueTrack = { id, user, ...track };
+    const id = allRequests.length + 1;
+    const addTrack: RequestTrack = { id, user, ...track };
 
     addToQueueTracks.push(addTrack);
-    chatterQueue.push(addTrack);
+    allRequests.push(addTrack);
 
     chatClient.say(`Трек #${id} ${track.title} добавлен в очередь`);
   }
@@ -57,7 +57,7 @@ async function addToQueue(user: string, tracks: Track[]) {
   );
 }
 
-function findRequestedTrack(uri: string): QueueTrack | undefined {
+function findRequestedTrack(uri: string): RequestTrack | undefined {
   const currentTrack = Spicetify.Queue.track;
   const nextTracks = Spicetify.Queue.nextTracks.filter(
     (track) => track.provider == "queue",
@@ -68,7 +68,7 @@ function findRequestedTrack(uri: string): QueueTrack | undefined {
   );
 
   if (track) {
-    const queue = [...chatterQueue].reverse();
+    const queue = [...allRequests].reverse();
     return queue.find((item) => item.uri == track.uri);
   }
 }
