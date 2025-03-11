@@ -29,6 +29,7 @@ class ChatClient {
       this.client = new TwurpleChatClient({
         authProvider,
         channels: [this.channel],
+        isAlwaysMod: true,
       });
 
       this.client.connect();
