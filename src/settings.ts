@@ -7,6 +7,7 @@ export const settings = new SettingsSection(
 
 export function pushSettings(onUpdate: () => void) {
   settings.addInput("max-tracks", "Maximum tracks", "20");
+  settings.addInput("max-user-tracks", "Maximum tracks per user", "5");
   settings.addInput("max-duration", "Maximum duration (min)", "10");
   settings.addInput("twitch-channel", "Twitch Channel", "");
   settings.addInput("twitch-client-id", "Twitch Client Id", "");

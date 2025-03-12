@@ -21,11 +21,20 @@ async function addToQueue(user: string, tracks: Track[]) {
   const maxTracks: number = settings.getFieldValue("max-tracks");
   const maxDuration: number = settings.getFieldValue("max-duration");
 
-  const addToQueueTracks: RequestTrack[] = [];
+  const maxUserTracks: number = settings.getFieldValue("max-user-tracks");
+
+  const userTracksInQueue = findUserTracks(user);
+
+  const requestTracks: RequestTrack[] = [];
 
   for (const track of tracks) {
-    if (nextTracks.length + addToQueueTracks.length >= maxTracks) {
+    if (nextTracks.length + requestTracks.length >= maxTracks) {
       chatClient.say(`Максимум ${maxTracks} треков в очереди`);
+      break;
+    }
+
+    if (requestTracks.length + userTracksInQueue.length >= maxUserTracks) {
+      chatClient.say(`Максимум ${maxUserTracks} треков на зрителя в очереди`);
       break;
     }
 
@@ -34,7 +43,7 @@ async function addToQueue(user: string, tracks: Track[]) {
       continue;
     }
 
-    const requestedTrack = findRequestedTrack(track.uri);
+    const requestedTrack = findRequestTrack(track.uri);
 
     if (requestedTrack) {
       chatClient.say(
@@ -44,20 +53,20 @@ async function addToQueue(user: string, tracks: Track[]) {
     }
 
     const id = allRequests.length + 1;
-    const addTrack: RequestTrack = { id, user, ...track };
+    const requestTrack: RequestTrack = { id, user, ...track };
 
-    addToQueueTracks.push(addTrack);
-    allRequests.push(addTrack);
+    requestTracks.push(requestTrack);
+    allRequests.push(requestTrack);
 
     chatClient.say(`Трек #${id} ${track.title} добавлен в очередь`);
   }
 
   await Spicetify.addToQueue(
-    addToQueueTracks.map((track) => ({ uri: track.uri })),
+    requestTracks.map((track) => ({ uri: track.uri })),
   );
 }
 
-function findRequestedTrack(uri: string): RequestTrack | undefined {
+function findRequestTrack(uri: string): RequestTrack | undefined {
   const currentTrack = Spicetify.Queue.track;
   const nextTracks = Spicetify.Queue.nextTracks.filter(
     (track) => track.provider == "queue",
@@ -71,4 +80,14 @@ function findRequestedTrack(uri: string): RequestTrack | undefined {
     const queue = [...allRequests].reverse();
     return queue.find((item) => item.uri == track.uri);
   }
+}
+
+function findUserTracks(user: string): RequestTrack[] {
+  const uris = Spicetify.Queue.nextTracks
+    .filter((track) => track.provider == "queue")
+    .map((track) => track.contextTrack.uri);
+
+  return allRequests.filter(
+    (request) => request.user == user && uris.includes(request.uri),
+  );
 }
