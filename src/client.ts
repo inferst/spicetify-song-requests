@@ -7,7 +7,7 @@ export type OnMessageCallback = (user: string, text: string) => void;
 const SCOPES = ["chat:read", "chat:edit", "channel:moderate"];
 
 class ChatClient {
-  private client!: TwurpleChatClient;
+  private client: TwurpleChatClient | undefined;
 
   private channel!: string;
 
@@ -45,15 +45,18 @@ class ChatClient {
   disconnect() {
     if (this.client) {
       this.client.quit();
+      this.client = undefined;
+
+      Spicetify.showNotification("Song Requests Disconnected");
     }
   }
 
   say(text: string) {
-    this.client.say(this.channel, text);
+    this.client?.say(this.channel, text);
   }
 
   onMessage(callback: OnMessageCallback) {
-    this.client.onMessage((_channel, user, text, _msg) => {
+    this.client?.onMessage((_channel, user, text, _msg) => {
       callback(user, text);
     });
   }
