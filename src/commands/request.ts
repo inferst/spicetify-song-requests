@@ -78,7 +78,7 @@ function findRequestTrack(uri: string): RequestTrack | undefined {
 
   if (track) {
     const queue = [...allRequests].reverse();
-    return queue.find((item) => item.uri == track.uri);
+    return queue.find((item) => item.uri == track.contextTrack.uri);
   }
 }
 

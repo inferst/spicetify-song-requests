@@ -34,7 +34,7 @@ async function main() {
 
   pushSettings(chatClient.connect, init);
 
-  const isEnabled: boolean = settings.getFieldValue("enabled");
+  const isEnabled: boolean = settings.getFieldValue("enabled") ?? false;
   init(isEnabled);
 }
 
