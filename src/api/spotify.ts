@@ -5,7 +5,7 @@ const API_URL = "https://api.spotify.com";
 export const spotifyApi = {
   searchTracks: async (query: string) => {
     const data = await Spicetify.CosmosAsync.get(
-      `${API_URL}/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1&offset=0`,
+      `${API_URL}/v1/search?q=${encodeURIComponent(query)}&type=track`,
     );
 
     return data as SpotifyApi.TrackSearchResponse;
