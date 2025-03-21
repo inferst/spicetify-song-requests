@@ -58,7 +58,11 @@ async function addToQueue(user: string, tracks: Track[]) {
     requestTracks.push(requestTrack);
     allRequests.push(requestTrack);
 
-    chatClient.say(`Трек #${id} ${track.title} добавлен в очередь`);
+    const position = nextTracks.length + requestTracks.length;
+
+    chatClient.say(
+      `Трек #${id} ${track.title} добавлен в очередь (${position}-й в списке)`,
+    );
   }
 
   await Spicetify.addToQueue(
