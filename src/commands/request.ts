@@ -52,7 +52,8 @@ async function addToQueue(user: string, tracks: Track[]) {
       continue;
     }
 
-    const id = allRequests.length + 1;
+    const id = generateId();
+
     const requestTrack: RequestTrack = { id, user, ...track };
 
     requestTracks.push(requestTrack);
@@ -94,4 +95,10 @@ function findUserTracks(user: string): RequestTrack[] {
   return allRequests.filter(
     (request) => request.user == user && uris.includes(request.uri),
   );
+}
+
+function generateId(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(2)))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
