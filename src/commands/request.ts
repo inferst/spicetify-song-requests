@@ -39,7 +39,7 @@ async function addToQueue(user: string, tracks: Track[]) {
     }
 
     if (track.duration > maxDuration * 60 * 1000) {
-      chatClient.say(`Трек должен быть меньше ${maxDuration} (мин)`);
+      chatClient.say(`Трек должен быть меньше ${maxDuration} мин`);
       continue;
     }
 

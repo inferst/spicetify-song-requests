@@ -17,6 +17,10 @@ export function pushSettings(
   settings.addInput("max-user-tracks", "Maximum tracks per user", "5");
   settings.addInput("max-duration", "Maximum duration (min)", "10");
 
+  settings.addInput("skip-votes", "Skip votes", "3");
+
+  settings.addInput("skip-command-alias", "Skip Command Alias", "");
+
   settings.addToggle("enabled", "Song requests enabled", false, () => {
     const value: boolean = settings.getFieldValue("enabled");
     onEnableToggle(value);
