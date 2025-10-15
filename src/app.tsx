@@ -1,9 +1,12 @@
+import { StreamerbotClient } from "@streamerbot/client";
 import { chatClient } from "./client";
 import { remove } from "./commands/remove";
 import { request } from "./commands/request";
 import { skip } from "./commands/skip";
 import { song } from "./commands/song";
 import { pushSettings, settings } from "./settings";
+
+const streamerbotClient = new StreamerbotClient();
 
 const init = (isEnabled: boolean) => {
   if (isEnabled) {
@@ -25,7 +28,15 @@ const init = (isEnabled: boolean) => {
       } else if (["!song"].includes(command)) {
         song();
       } else if (["!skip", ...skipCommands].includes(command)) {
-        skip();
+        skip(user);
+      }
+    });
+
+    streamerbotClient.on("Twitch.RewardRedemption", (payload) => {
+      const skipRewardId = settings.getFieldValue("skip-command-reward-id");
+
+      if (skipRewardId == payload.data.reward.id) {
+        skip(payload.data.user_name, true);
       }
     });
   } else {

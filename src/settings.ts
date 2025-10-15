@@ -20,6 +20,7 @@ export function pushSettings(
   settings.addInput("skip-votes", "Skip votes", "3");
 
   settings.addInput("skip-command-alias", "Skip Command Alias", "");
+  settings.addInput("skip-command-reward-id", "Skip Command Reward Id", "");
 
   settings.addToggle("enabled", "Song requests enabled", false, () => {
     const value: boolean = settings.getFieldValue("enabled");
