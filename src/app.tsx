@@ -1,12 +1,10 @@
-import { StreamerbotClient } from "@streamerbot/client";
 import { chatClient } from "./client";
 import { remove } from "./commands/remove";
 import { request } from "./commands/request";
 import { skip } from "./commands/skip";
 import { song } from "./commands/song";
 import { pushSettings, settings } from "./settings";
-
-const streamerbotClient = new StreamerbotClient();
+import { streamerbotClient } from "./streamerbot";
 
 const init = (isEnabled: boolean) => {
   if (isEnabled) {

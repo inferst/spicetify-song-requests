@@ -9,28 +9,13 @@ export type Track = {
   duration: number;
 };
 
-function formatTrack(spotifyTrack: SpotifyApi.TrackObjectFull): Track {
-  const name = spotifyTrack.name;
-  const artists = spotifyTrack.artists.map((artist) => artist.name).join(" ");
-
-  return {
-    uri: spotifyTrack.uri,
-    title: trackTitle(name, artists),
-    duration: spotifyTrack.duration_ms,
-  };
-}
-
-export function trackTitle(name: string, artist: string): string {
-  return `"${name} - ${artist}"`;
-}
-
 export async function getTracksByMessage(message: string): Promise<Track[]> {
   const words = message.split(" ");
   const urls = new Set(words);
 
   const spotifyIds: string[] = [];
 
-  const tracks: SpotifyApi.TrackObjectFull[] = [];
+  const tracks: Track[] = [];
 
   for (let item of urls) {
     const youtubeId = parseYoutubeURL(item);
@@ -46,10 +31,12 @@ export async function getTracksByMessage(message: string): Promise<Track[]> {
 
         if (title) {
           const data = await spotifyApi.searchTracks(title);
-          const foundTrack = data.tracks.items[0];
+          if (data) {
+            const foundTrack = data[0];
 
-          if (foundTrack) {
-            tracks.push(foundTrack);
+            if (foundTrack) {
+              tracks.push(foundTrack);
+            }
           }
         }
       }
@@ -62,19 +49,23 @@ export async function getTracksByMessage(message: string): Promise<Track[]> {
 
   if (spotifyIds.length > 0) {
     const data = await spotifyApi.getTracks(spotifyIds);
-    for (const item of data.tracks) {
-      tracks.push(item);
+    if (data) {
+      for (const item of data) {
+        tracks.push(item);
+      }
     }
   }
 
   if (tracks.length == 0) {
     const data = await spotifyApi.searchTracks(message);
-    const foundTrack = data.tracks.items[0];
+    if (data) {
+      const foundTrack = data[0];
 
-    if (foundTrack) {
-      return [formatTrack(foundTrack)];
+      if (foundTrack) {
+        return [foundTrack];
+      }
     }
   }
 
-  return tracks.map(formatTrack);
+  return tracks;
 }

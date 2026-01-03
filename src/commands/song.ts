@@ -1,5 +1,5 @@
+import { trackTitle } from "../api/spotify";
 import { chatClient } from "../client";
-import { trackTitle } from "../track";
 
 export function song() {
   const queueTrack = Spicetify.Queue.track;
